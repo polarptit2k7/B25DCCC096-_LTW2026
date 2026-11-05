@@ -10,6 +10,7 @@ import QuestionDetail from './pages/QuestionDetail';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Play from './pages/Play';
+import History from './pages/History';
 import Result from './pages/Result';
 
 const App = () => {
@@ -17,6 +18,15 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [playerName, setPlayerName] = useState('');
+  const [history, setHistory] = useState(() => {
+  try {
+    const raw = localStorage.getItem('ltw_3mang_history');
+    const data = raw ? JSON.parse(raw) : [];
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    return [];
+  }
+});
 
   useEffect(() => {
     const controller = new AbortController();
@@ -35,16 +45,23 @@ const App = () => {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+  localStorage.setItem('ltw_3mang_history', JSON.stringify(history));
+}, [history]);
+
+const addHistory = (record) => setHistory((prev) => [...prev, record]);
+const clearHistory = () => setHistory([]);
+
   
 
   return (
     <div data-build={BUILD_TAG}>
       <Routes>
         <Route path="/" element={<Layout loading={loading} error={error} />}>
-          <Route index element={<Home playerName={playerName} setPlayerName={setPlayerName} />} />
-          <Route path="play" element={<Play questions={questions} playerName={playerName} />} />
+          <Route index element={<Home playerName={playerName} setPlayerName={setPlayerName} history={history} />} />
+          <Route path="play" element={<Play questions={questions} playerName={playerName} onFinish={addHistory} />} />
           <Route path="result" element={<Result />} />
-          <Route path="history" element={<h2>Lịch sử</h2>} />
+          <Route path="history" element={<History history={history} onClear={clearHistory} />} />
           <Route path="questions" element={<QuestionBank questions={questions} />} />
           <Route path="questions/:id" element={<QuestionDetail questions={questions} />} />
           <Route path="*" element={<NotFound />} />
